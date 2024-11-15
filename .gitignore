@@ -35,3 +35,59 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+# macOS System files
+.DS_Store
+.AppleDouble
+.AppleDB
+.AppleDesktop
+.Spotlight-V100
+.Trashes
+Icon\r
+._*
+
+# Local configuration files
+*.swp
+*.swo
+*.sublime-workspace
+.vscode/*
+
+# Compiled output files
+*.o
+*.pyc
+*.pyo
+*.class
+*.jar
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+
+# Dependency and build artifacts
+node_modules/
+vendor/
+dist/
+build/
+*.min.js
+*.min.css
+
+# Package manager files
+package-lock.json
+yarn.lock
+pip-log.txt
+*.egg-info/
+
+# Environment and configuration files
+.env
+.env.local
+.env.*.local
+
+# IDE and editor configurations
+.idea/
+.project
+.classpath
+*.suo
+*.user
+*.userosscache
+*.sln.dotSettings
+
