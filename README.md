@@ -1,102 +1,66 @@
-Got it! Here's the updated README file with the Apache 2.0 license statement:
-
----
-
-# Fakenet Project
+# DNS Configuration Script
 
 ## Overview
-The Fakenet project is designed to build a fake internet environment in the cloud using Terraform. This environment is created to simulate various internet services for testing and educational purposes. The project includes fake Indicators of Compromise (IOC) delivery, fake Apache servers, fake email services, and is driven by PowerDNS. This project aims to make building a fake internet or fake cyber range environment easy. Having done this by hand a few times, the idea was to automate the problem away.
 
-Please send any and all feedback to @packetmonk
+This PowerShell script automates the installation and configuration of DNS services on a Windows Server environment. It specifically:
 
-We are laaaaazer focused on PowerDNS with the goal of API interaction for easy of updates. That's FIRST!, more to follow.
+- Installs the DNS Server feature.
+- Configures the DNS service to start automatically upon system boot.
+- Creates specified DNS zones with defined replication scopes.
+- Adds A records to these zones for specific hosts.
+
+## Script Features
+
+- **DNS Feature Installation**: Uses `Install-WindowsFeature` to add the DNS Server role.
+- **Service Management**: Ensures the DNS service is running and set to start automatically.
+- **Zone Creation**: Customizable DNS zone creation with options for replication scope.
+- **Record Addition**: Adds A records to DNS zones for simplified network management.
+- **Error Handling**: Stops execution on error to prevent partial configurations.
+- **Verbose Logging**: Provides detailed logs of each operation for troubleshooting and verification.
 
 ## Prerequisites
-Before you begin, ensure you have the following installed (This was LLM generated, we will grow it as we discover things that make us say "Oh <expletive>, I forgot that":
-- [Terraform](https://www.terraform.io/downloads.html)
-- An account with Microsoft Azure
-- [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
-- Basic knowledge of DNS, Apache, and email servers
 
-## Getting Started
+- **Operating System**: Windows Server (with PowerShell 5.1 or later).
+- **Permissions**: Must be run with administrative privileges.
+- **Network Configuration**: Ensure network settings are appropriate for DNS service operation.
 
-These steps are basic, cause we are just getting started, gas / battery / hydrogen efficiency may vary here.
-### Clone the Repository
-```sh
-git clone https://github.com/yourusername/fakenet.git
-cd fakenet
-```
+## Usage
 
-### Initialize Terraform
-Initialize the Terraform working directory and install the required plugins.
-```sh
-terraform init
-```
+1. **Download the Script**:
+   - Clone this repository or download the script directly.
 
-### Configure Variables
-Create a `terraform.tfvars` file to configure your variables. Here’s an example:
-```hcl
-resource_group_name = "fakenet-resources"
-location            = "East US"
-admin_username      = "adminuser"
-admin_password      = "Password1234!"
-```
+2. **Run the Script**:
+   - Open PowerShell as Administrator.
+   - Navigate to the script's directory:
+     ```powershell
+     cd path\to\script\directory
+     ```
+   - Execute the script:
+     ```powershell
+     .\ConfigureDNS.ps1 -Verbose
+     ```
+   
+   The `-Verbose` flag is optional but recommended for full logging.
 
-### Deploy FakeDNS
-Apply the Terraform configuration to deploy the FakeDNS server.
-```sh
-terraform apply
-```
-Confirm the execution by typing `yes`.
+## Functions
 
-## Project Structure
-Here's a brief overview of the project structure:
-```
-fakenet/
-├── main.tf          # Main Terraform configuration file
-├── variables.tf     # Variable definitions
-├── output.tf        # Output definitions
-├── modules/
-│   ├── fakedns/     # Module for FakeDNS setup
-│   │   ├── main.tf
-│   │   ├── variables.tf
-│   │   ├── outputs.tf
-```
+- **Update-DNSZone**: Adds a new DNS zone with specified replication settings.
+- **Add-ARecord**: Adds an A record to a specified DNS zone.
 
-## FakeDNS Module
-The FakeDNS module sets up a PowerDNS server on Debian 11. It configures the necessary DNS zones and makes the server accessible from the internet on port 53 (TCP/UDP).
+## Configuration
 
-### Configuration
-Customize the DNS zones by modifying the `zones` variable in `modules/fakedns/variables.tf`.
+The script uses a predefined array `$dnsZones` to set up the zones and records. To modify:
 
-```hcl
-variable "zones" {
-  description = "List of DNS zones"
-  type        = list(string)
-  default     = ["example.com", "test.com"]
-}
-```
-
-### TODO
-- [ ] Implement fake IOC delivery
-- [ ] Set up fake Apache servers
-- [ ] Configure fake email services
-- [ ] Integrate Palo Alto Networks NGFW firewall
-- [ ] Add detailed documentation for each module
-- [ ] Create test cases for the fake services
-- [ ] Optimize Terraform scripts for scalability
-- [ ] Add CI/CD pipeline for automated deployment
-
-## Contributing
-We welcome contributions! Please fork the repository and submit pull requests. For major changes, please open an issue first to discuss what you would like to change.
-
-## License
-This project is licensed under the Apache License 2.0. See the `LICENSE` file for more details.
-
-## Acknowledgments
-- Thanks to the Terraform community for their helpful resources.
-- Special shout out to the Internet Storm Center Handlers for poking me to come out of the shadows.
-- Big Thanks to LLM developers for accelerating development work. 
-
-## Disclosures
-- Some of this was done with an LLM, any LLM work will be noted for Software Bill of Materials
+- Edit the `$dnsZones` array within the script to include new zones or change existing ones:
+  ```powershell
+  $dnsZones = @(
+      @{
+          name = "example.com"
+          replication = "Domain"
+          records = @(
+              @{ name = "www"; ip = "192.168.1.1" },
+              # Add more records here
+          )
+      },
+      # Other zones
+  )
