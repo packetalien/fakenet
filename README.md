@@ -4,8 +4,6 @@
 
 This PowerShell script automates the installation and configuration of DNS services on a Windows Server environment. It specifically:
 
-- Installs the DNS Server feature.
-- Configures the DNS service to start automatically upon system boot.
 - Creates specified DNS zones with defined replication scopes.
 - Adds A records to these zones for specific hosts.
 
