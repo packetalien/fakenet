@@ -1,0 +1,9 @@
+ZoneName,Replication,RecordName,IPAddress
+example.test,Domain,dl,192.0.2.1
+example.test,Domain,games,192.0.2.1
+example.test,Domain,livegames,192.0.2.1
+example.test,Domain,blogspot,192.0.2.1
+example.test,Domain,content,192.0.2.1
+example.test,Domain,xin,192.0.2.1
+example.test,Domain,link54154415,192.0.2.1
+example.test,Domain,tools,192.0.2.1

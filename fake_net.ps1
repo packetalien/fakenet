@@ -1,24 +1,21 @@
 <#
 .SYNOPSIS
-    Configures DNS server with specific zones and A records.
+    Configures DNS server with specific zones and A records. Assume DNS on Windows exists. 
 
 .DESCRIPTION
-    This script:
-    - Updates the system and installs the DNS Server feature.
-    - Starts and sets the DNS service to start automatically.
     - Creates DNS zones with specified replication scopes.
     - Adds A records to the created DNS zones.
     - Provides detailed verbose logging for each step.
 
 .EXAMPLE
-    .\ConfigureDNS.ps1 -Verbose
+    .\fake_net.ps1 -Verbose
 
 .NOTES
-    File Name      : ConfigureDNS.ps1
-    Author         : Your Name
+    File Name      : fake_net.ps1.ps1
+    Author         : @packetmonk (@packetalien on GitHub)
     Requires       : PowerShell 5.1 or higher
     Version        : 1.0
-    Date           : Today's Date
+    Date           : 30 JAN 2025
 
     Ensure you run this with administrative privileges. This script assumes you have the necessary permissions to install features and manage DNS zones.
 
@@ -38,7 +35,40 @@ function Write-Log {
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     Write-Output "[$timestamp] $Message"
 }
+<#
+.SYNOPSIS
+    Checks if the DNS Server service is installed on the system.
 
+.DESCRIPTION
+    This function checks to see if the DNS Server feature is installed. 
+    If the DNS Server service is not detected, it logs a message and 
+    exits the script. This ensures that DNS-related operations are 
+    performed only when the necessary service is available.
+
+.EXAMPLE
+    Check-DNSService -Verbose
+    This command checks for the DNS Server service and outputs verbose logging.
+#>
+function Check-DNSService {
+    [CmdletBinding()]
+    param()
+
+    Write-Verbose "Checking for DNS Server service..."
+    
+    try {
+        $dnsFeature = Get-WindowsFeature -Name DNS
+        if ($dnsFeature -and $dnsFeature.Installed) {
+            Write-Verbose "DNS Server service is installed and available."
+        } else {
+            Write-Verbose "DNS Server service is not installed."
+            Write-Error "The DNS Server service is not installed. Exiting script."
+            exit 1
+        }
+    } catch {
+        Write-Error "An error occurred while checking for DNS Server service: $_"
+        exit 1
+    }
+}
 <#
 .SYNOPSIS
     Creates a new DNS Primary Zone.
@@ -97,67 +127,80 @@ function Add-ARecord {
     Write-Log "Adding A record $RecordName with IP $RecordIP to zone $ZoneName..."
     Add-DnsServerResourceRecordA -ZoneName $ZoneName -Name $RecordName -IPv4Address $RecordIP -Verbose
 }
+<#
+.SYNOPSIS
+    Imports DNS zone data from a CSV file and structures it into an array.
 
+.DESCRIPTION
+    This function reads a CSV file containing DNS zone information, constructs 
+    an array where each element represents a DNS zone with its associated 
+    records. The function uses verbose logging to detail each step of the 
+    import process.
+
+.PARAMETER Path
+    The full path to the CSV file containing the DNS zone data.
+
+.RETURNS
+    An array of hashtables, each representing a DNS zone with its records.
+
+.EXAMPLE
+    $dnsZones = Import-DNSZonesFromCSV -Path "C:\dnsZones.csv" -Verbose
+    This command imports DNS zones from dnsZones.csv, outputs verbose logging, 
+    and stores the result in $dnsZones.
+
+.NOTES
+    The CSV should have columns named "ZoneName", "Replication", "RecordName", 
+    and "IPAddress". This function assumes the CSV adheres to this structure.
+#>
+function Import-DNSZonesFromCSV {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true)]
+        [string]$Path
+    )
+
+    Write-Verbose "Starting import of DNS zones from CSV."
+
+    try {
+        Write-Verbose "Reading CSV file from path: $Path"
+        $importedData = Import-Csv -Path $Path
+
+        $dnsZones = @()
+        $currentZoneName = $null
+
+        Write-Verbose "Processing CSV entries..."
+        foreach ($row in $importedData) {
+            if ($currentZoneName -ne $row.ZoneName) {
+                Write-Verbose "Adding new zone: $($row.ZoneName)"
+                $currentZoneName = $row.ZoneName
+                $dnsZones += @{
+                    name = $row.ZoneName
+                    replication = $row.Replication
+                    records = @()
+                }
+            }
+            
+            # Find the correct zone to add the record to
+            $zone = $dnsZones | Where-Object { $_.name -eq $row.ZoneName }
+            Write-Verbose "Adding record $($row.RecordName) with IP $($row.IPAddress) to zone $($row.ZoneName)"
+            $zone.records += @{ name = $row.RecordName; ip = $row.IPAddress }
+        }
+
+        Write-Verbose "Finished processing CSV. Total zones imported: $($dnsZones.Count)"
+        return $dnsZones
+
+    } catch {
+        Write-Error "An error occurred while importing DNS zones from CSV: $_"
+        return $null
+    }
+}
 # Main script execution starts here
 try {
     # Update the system and install necessary features
-    Write-Log "Updating system and installing DNS Server feature..."
-    Install-WindowsFeature -Name DNS -IncludeManagementTools -Verbose
-
-    # Start and enable the DNS Server service
-    Write-Log "Starting and enabling DNS Server service..."
-    Set-Service -Name DNS -StartupType Automatic -Verbose
-    Start-Service -Name DNS -Verbose
-
-    # Verify DNS Server installation
-    $dnsFeature = Get-WindowsFeature -Name DNS
-    Write-Log "DNS Server installation state: $($dnsFeature.InstallState)"
-
+    Check-DNSService
+    
     # DNS zones and A records configuration
-    $dnsZones = @(
-        @{
-            name = "blogspot.ie"
-            replication = "Domain"
-            records = @(
-                @{ name = "dl"; ip = "78.16.206.86" },
-                @{ name = "games"; ip = "78.16.206.86" },
-                @{ name = "livegames"; ip = "78.16.206.86" },
-                @{ name = "blogspot"; ip = "78.16.206.86" },
-                @{ name = "content"; ip = "78.16.206.86" },
-                @{ name = "xin"; ip = "78.16.206.86" },
-                @{ name = "link54154415"; ip = "78.16.206.86" },
-                @{ name = "tools"; ip = "78.16.206.86" }
-            )
-        },
-        @{
-            name = "coateng.cn"
-            replication = "Domain"
-            records = @(
-                @{ name = "dl"; ip = "121.43.50.68" },
-                @{ name = "games"; ip = "121.43.50.68" },
-                @{ name = "livegames"; ip = "121.43.50.68" },
-                @{ name = "blogspot"; ip = "121.43.50.68" },
-                @{ name = "content"; ip = "121.43.50.68" },
-                @{ name = "xin"; ip = "121.43.50.68" },
-                @{ name = "link54154415"; ip = "121.43.50.68" },
-                @{ name = "tools"; ip = "121.43.50.68" }
-            )
-        },
-        @{
-            name = "steanconmmunity.ru"
-            replication = "Domain"
-            records = @(
-                @{ name = "dl"; ip = "80.66.75.51" },
-                @{ name = "games"; ip = "80.66.75.51" },
-                @{ name = "livegames"; ip = "80.66.75.51" },
-                @{ name = "blogspot"; ip = "80.66.75.51" },
-                @{ name = "content"; ip = "80.66.75.51" },
-                @{ name = "xin"; ip = "80.66.75.51" },
-                @{ name = "link54154415"; ip = "80.66.75.51" },
-                @{ name = "tools"; ip = "80.66.75.51" }
-            )
-        }
-    )
+    $dnsZones = Import-DNSZonesFromCSV -Path .\fake_net.csv -Verbose
 
     # Create DNS zones and add A records
     foreach ($zone in $dnsZones) {
