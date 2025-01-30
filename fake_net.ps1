@@ -155,10 +155,10 @@ function Add-ARecord {
 function Import-DNSZonesFromCSV {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$true)]
-        [string]$Path
+        [Parameter(Mandatory=$false)]
+        [string]$Path = ".\fake_net.csv"
     )
-
+    
     Write-Verbose "Starting import of DNS zones from CSV."
 
     try {
